@@ -12,17 +12,17 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "fork failed\n");
 	} else if (rc == 0) {
 		// child
-		char *args1[] = {"ls", "-la", NULL};
-		execvp("/bin/ls", args1);
+		printf("hello i am in child (pid:%d)\n", (int) getpid());
 	} else {
 		// parent
-		char *args1[] = {"ls", "-la", NULL};
-		execvp("/bin/ls", args1);
+		int wc = wait(NULL);
+		printf("hello i am in parent of %d (pid:%d)\n", rc, (int) getpid());
+		printf("return value from wait = %d\n", wc);
 	}
 	return 0;
 }
 
-// ls appears to run 2 times, once in child, once in parent
+// return value from wait is the child process id
 
 
 
