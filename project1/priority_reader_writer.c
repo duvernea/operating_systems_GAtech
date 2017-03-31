@@ -6,6 +6,7 @@
 
 int SHARED_GLOBAL_VAR;
 int count = 0;
+int readers = 0;
 
 pthread_mutex_t mux = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t c_cons = PTHREAD_COND_INITIALIZER;
@@ -13,10 +14,12 @@ pthread_cond_t c_prod = PTHREAD_COND_INITIALIZER;
 
 void *producer(void* param);
 void *consumer(void* param);
+void randomWait();
 
 int main() {
 	// pthread_t tid1, tid2;
 	printf("prog start running...");
+	srand(time(NULL));   // seed for random
 
 	int num_prod_threads = 4;
 	int num_cons_threads = 4;
@@ -52,6 +55,8 @@ void *producer(void* param) {
 	pthread_threadid_np(NULL, &tid);
 	printf("Producer thread %llu running...\n", tid);
 
+	randomWait();
+
 	pthread_mutex_lock(&mux);
 	int i = *((int *) param);
 	while (count == 1) {
@@ -70,6 +75,8 @@ void *consumer(void* param) {
 	pthread_threadid_np(NULL, &tid);
 	printf("Consumer thread %llu running...\n", tid);
 
+	randomWait();
+
 	pthread_mutex_lock(&mux);
 	while (count == 0) {
 		pthread_cond_wait(&c_cons, &mux);
@@ -80,4 +87,15 @@ void *consumer(void* param) {
 	pthread_cond_signal(&c_prod);
 
 	return 0;
+}
+
+void randomWait() {
+	// sleep in microseconds
+	int r = rand(); 
+	r = 10 * (r % 1000);
+	usleep(r);
+	// convert to milliseconds
+	float ms = r / 1000.0;
+	printf("random sleep in milliseconds: %.2f\n", ms);
+
 }
