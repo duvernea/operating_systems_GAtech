@@ -9,84 +9,71 @@ int count = 0;
 int readers = 0;
 
 pthread_mutex_t mux = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t c_cons = PTHREAD_COND_INITIALIZER;
-pthread_cond_t c_prod = PTHREAD_COND_INITIALIZER;
+pthread_cond_t c_reader = PTHREAD_COND_INITIALIZER;
+pthread_cond_t c_writer = PTHREAD_COND_INITIALIZER;
 
-void *producer(void* param);
-void *consumer(void* param);
+void *writer(void* param);
+void *reader(void* param);
 void randomWait();
 
 int main() {
 	// pthread_t tid1, tid2;
-	printf("prog start running...");
 	srand(time(NULL));   // seed for random
 
-	// int num_prod_threads = 5;
-	// int num_cons_threads = 5;
-	int num_threads = 10; // each
-
-	// Producer Threads creation
+	int num_threads = 5; // each
+	// Threads creation
 	int ints[num_threads];
-	pthread_t prod_threads[num_threads];
-	pthread_t cons_threads[num_threads];
+	pthread_t writer_threads[num_threads];
+	pthread_t reader_threads[num_threads];
 
 	for (int i=0; i<num_threads; ++i) {
 		ints[i] = i;
-		pthread_create(&cons_threads[i], NULL, consumer, NULL);
+		pthread_create(&writer_threads[i], NULL, writer, &ints[i]);
 		randomWait();
-
-		pthread_create(&prod_threads[i], NULL, producer, &ints[i]);
+		pthread_create(&reader_threads[i], NULL, reader, NULL);
 
 		readers++;
-		randomWait();
 	}
-
 	// join threads
 	for (int i=0; i<num_threads; ++i) {
-		pthread_join(prod_threads[i], NULL);
-		randomWait();
-
-		pthread_join(cons_threads[i], NULL);
+		pthread_join(writer_threads[i], NULL);
+		pthread_join(reader_threads[i], NULL);
 	}
-
-	printf("parent quitting\n");
 }
 
-void *producer(void* param) {
+void *writer(void* param) {
 	uint64_t tid;
 	pthread_threadid_np(NULL, &tid);
-	//printf("Producer thread %llu running...\n", tid);
 
+	randomWait();
 	pthread_mutex_lock(&mux);
 	int i = *((int *) param);
 	while (readers > 0) {
-		pthread_cond_signal(&c_cons);
-	 	pthread_cond_wait(&c_prod, &mux);
+		pthread_cond_signal(&c_reader);
+	 	pthread_cond_wait(&c_writer, &mux);
 	 }
 	SHARED_GLOBAL_VAR = i;
-	// count = 1;
 	printf("Writing Global Var = %i, #Readers = %i (thread %llu)\n", SHARED_GLOBAL_VAR, readers, tid);
 	fflush(stdout);
 	pthread_mutex_unlock(&mux);
-	pthread_cond_signal(&c_cons);
-	pthread_cond_signal(&c_prod);	
+	pthread_cond_signal(&c_reader);
+	pthread_cond_signal(&c_writer);	
 	return 0;
 }
 
-void *consumer(void* param) {
+void *reader(void* param) {
 	uint64_t tid;
 	pthread_threadid_np(NULL, &tid);
-	// printf("Consumer thread %llu running...\n", tid);
 
+	randomWait();
 	pthread_mutex_lock(&mux);
 	while (readers == 0) {
-		pthread_cond_wait(&c_cons, &mux);
+		pthread_cond_wait(&c_reader, &mux);
 	}
 	printf("Reading Global Var = %i, #Readers = %i (thread %llu)\n", SHARED_GLOBAL_VAR, readers, tid);
-	// count = 0;
 	readers--;
 	pthread_mutex_unlock(&mux);
-	pthread_cond_signal(&c_prod);
+	pthread_cond_signal(&c_writer);
 	return 0;
 }
 
@@ -97,6 +84,4 @@ void randomWait() {
 	usleep(r);
 	// convert to milliseconds
 	float ms = r / 1000.0;
-	// printf("random sleep in milliseconds: %.2f\n", ms);
-
 }
