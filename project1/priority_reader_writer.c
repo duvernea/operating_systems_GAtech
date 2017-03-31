@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 int SHARED_GLOBAL_VAR;
 int count = 0;
@@ -26,10 +28,7 @@ int main() {
 		ints[i] = i;
 		pthread_create(&prod_threads[i], NULL, producer, &ints[i]);
 	}
-	// join producer threads
-	for (int i=0; i<num_prod_threads; ++i) {
-		pthread_join(prod_threads[i], NULL);
-	}
+
 
 	// Consumer Threads creation
 	pthread_t cons_threads[num_cons_threads];
@@ -38,30 +37,47 @@ int main() {
 		pthread_create(&cons_threads[i], NULL, consumer, NULL);
 	}
 	// join producer threads
+	for (int i=0; i<num_prod_threads; ++i) {
+		pthread_join(prod_threads[i], NULL);
+	}
+	// join consumer threads
 	for (int i=0; i<num_cons_threads; ++i) {
 		pthread_join(cons_threads[i], NULL);
 	}
-
-
 	printf("parent quitting\n");
 }
 
 void *producer(void* param) {
-	printf("Producer thread running...\n");
+	uint64_t tid;
+	pthread_threadid_np(NULL, &tid);
+	printf("Producer thread %llu running...\n", tid);
 
 	pthread_mutex_lock(&mux);
 	int i = *((int *) param);
-	// while (count == 0) {
-	// 	pthread_cond_wait(&c_cons, &mux);
-	// }
+	while (count == 1) {
+	 	pthread_cond_wait(&c_prod, &mux);
+	 }
 	SHARED_GLOBAL_VAR = i;
-	// count = 1;
+	count = 1;
 	pthread_mutex_unlock(&mux);
 	pthread_cond_signal(&c_cons);
-	printf("Producer: inserted %d\n", SHARED_GLOBAL_VAR); fflush(stdout);
+	printf("Producing Global Var = %i (thread %llu)\n", SHARED_GLOBAL_VAR, tid); fflush(stdout);
 	return 0;
 }
 
 void *consumer(void* param) {
+	uint64_t tid;
+	pthread_threadid_np(NULL, &tid);
+	printf("Consumer thread %llu running...\n", tid);
+
+	pthread_mutex_lock(&mux);
+	while (count == 0) {
+		pthread_cond_wait(&c_cons, &mux);
+	}
+	printf("Consuming Global Var = %i (thread %llu)\n", SHARED_GLOBAL_VAR, tid);
+	count = 0;
+	pthread_mutex_unlock(&mux);
+	pthread_cond_signal(&c_prod);
+
 	return 0;
 }
