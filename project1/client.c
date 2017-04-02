@@ -96,6 +96,20 @@ int main(int argc, char* argv[]) {
 	// network byte order using the function htons() which converts a 
 	// port number in host byte order to a port number in network byte order.
 	serv_addr.sin_port = htons(portno);
+
+	// The connect function is called by the client to establish a 
+	// connection to the server. It takes three arguments, the socket 
+	// file descriptor, the address of the host to which it wants to connect 
+	// (including the port number), and the size of this address. 
+	// This function returns 0 on success and -1 if it fails.   
+	// Notice that the client needs to know the port number of the server, 
+	// but it does not need to know its own port number. 
+	// This is typically assigned by the system when connect is called.
+	if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
+        error("ERROR connecting");
+    printf("Please enter the message: ");
+    bzero(buffer,256);
+    fgets(buffer,255,stdin);
 }
 
 void error(char *msg)
