@@ -110,6 +110,19 @@ int main(int argc, char* argv[]) {
     printf("Please enter the message: ");
     bzero(buffer,256);
     fgets(buffer,255,stdin);
+
+	// writes message to socket, 
+	// reads the reply from the socket
+	// displays this reply on the screen.
+    n = write(sockfd,buffer,strlen(buffer));
+    if (n < 0) 
+         error("ERROR writing to socket");
+    bzero(buffer,256);
+    n = read(sockfd,buffer,255);
+    if (n < 0) 
+         error("ERROR reading from socket");
+    printf("%s\n",buffer);
+    return 0;
 }
 
 void error(char *msg)
