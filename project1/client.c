@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>
+#include <unistd.h>
 
 void error(char *msg);
 

@@ -28,6 +28,27 @@ int main(int argc, char* argv[]) {
 		exit(1);
      }
 
+	sockfd = socket(AF_INET, SOCK_STREAM, 0); 
+	if (sockfd < 0) {
+		error("ERROR opening socket");
+	}
+	// set all values to zero
+	bzero((char *) &serv_addr, sizeof(serv_addr));
+	// the port number on which the server will listen for connections
+	// atoi - converts string of digits to an integer
+	portno = atoi(argv[1]);
+
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port = htons(portno);
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	// bind socket to address
+	if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+		error("ERROR on binding");
+	}
+	// 5 = size of the backlog queue, #connections that can be waiting 
+	// while the process is handling a particular connection. 5=max size permitted by most systems
+	listen(sockfd,5);
+
 	return 0;
 }
 
