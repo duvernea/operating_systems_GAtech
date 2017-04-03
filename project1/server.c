@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>
@@ -8,7 +9,7 @@
 
 
 void error(char *msg);
-
+void toUpperCase(char bufferin[]);
 
 int main(int argc, char* argv[]) {
 
@@ -20,7 +21,6 @@ int main(int argc, char* argv[]) {
 	socklen_t clilen;
 	int n;			// return value from read() and write(). #chars read or writen
 	
-
     char buffer[256];
 	// The server reads characters from the socket connection into this buffer.
 	// The server code has a server and client sockaddr_in:
@@ -72,15 +72,29 @@ int main(int argc, char* argv[]) {
 	bzero(buffer,256);
 	n = read(newsockfd,buffer,255);
 	if (n < 0) error("ERROR reading from socket");
-	printf("Here is the message: %s\n",buffer);
+
+	toUpperCase(buffer);
+
+	printf("Here is the message in uppercase: %s\n",buffer);
+
 	n = write(newsockfd,"I got your message",18);
+
 	if (n < 0) error("ERROR writing to socket");
+
 	close(newsockfd);
 	close(sockfd);
-
 	return 0;
 }
 
+
+void toUpperCase(char buffer[]) {
+	int i = 0;
+	while(buffer[i])
+	{
+	  buffer[i] = toupper(buffer[i]);
+	  i++;
+	}
+}
 
 void error(char *msg)
 {
