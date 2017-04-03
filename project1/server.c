@@ -11,6 +11,7 @@ void error(char *msg);
 
 
 int main(int argc, char* argv[]) {
+
 	int set_reuse_addr = 1; // ON == 1  
 	int sockfd;		// return from socket system call
 	int newsockfd;	// return from accept system call
@@ -37,11 +38,6 @@ int main(int argc, char* argv[]) {
 	if (sockfd < 0) {
 		error("ERROR opening socket");
 	}
-// Set socket to use wildcards - i.e. 0.0.0.0:21 and 192.168.0.1:21
-  // can be bound separately (helps to avoid conflicts) 
-  if (0 != setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &set_reuse_addr, sizeof(set_reuse_addr))) {
-    fprintf(stderr, "server failed to set SO_REUSEADDR socket option (not fatal)\n");
-  }
 
 	// set all values to zero
 	bzero((char *) &serv_addr, sizeof(serv_addr));
@@ -52,17 +48,6 @@ int main(int argc, char* argv[]) {
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(portno);
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
-
-	// struct sockaddr_in sa;
-	// char str[INET_ADDRSTRLEN];
-
-	// // store this IP address in sa:
-	// inet_pton(AF_INET, "192.0.2.33", &(sa.sin_addr));
-
-	// // now get it back and print it
-	// inet_ntop(AF_INET, &(sa.sin_addr), str, INET_ADDRSTRLEN);
-
-	// printf("%s\n", str); // prints "192.0.2.33"
 
 	// bind socket to address
 	if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
